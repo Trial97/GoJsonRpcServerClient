@@ -1,12 +1,11 @@
 package main
 
 import (
-	"fmt"
-	"os"
 	"testing"
+	"time"
 )
 
-func TestStartServer(t *testing.T) {
+func init() {
 	// cmd := exec.Command("./server", "&")
 	// err := cmd.Start()
 	// if err != nil {
@@ -25,11 +24,32 @@ func TestCientSum(t *testing.T) {
 	defer c.Close()
 	A, B := 10, 15
 	var r int
-	CallSumFunc(c, A, B, &r)
-	if r != A+B {
-		t.Fatal("Sum is wrong")
-	}
+	t.Error(CallSumFunc(c, A, B, &r))
+	var b bool
+	go func() {
+		for !b {
+			err := CallSumFunc(c, A, B, &r)
+			if err != nil {
+				if err.Error() == "connection is shut down" {
+					c = CreateNewClient("localhost", port)
+					continue
+				}
+				t.Error(err)
+			}
+		}
+	}()
+	t.Error(CallSumFunc(c, A, B, &r))
+	switchServer(10)
+	t.Error(CallSumFunc(c, A, B, &r))
+
+	// if r != A+B {
+	// 	t.Fatal("Sum is wrong")
+	// }
+	time.Sleep(10 * time.Second)
+	b = true
 }
+
+/*
 func TestCientWrite(t *testing.T) {
 	port := 8223
 	// go StartServer(port)
@@ -75,3 +95,4 @@ func TestCienRead(t *testing.T) {
 		t.Fatal("number not saved")
 	}
 }
+*/
